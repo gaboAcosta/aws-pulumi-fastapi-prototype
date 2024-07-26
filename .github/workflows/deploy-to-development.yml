@@ -20,11 +20,6 @@ jobs:
         with:
           node-version: 16
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Install dependencies
-        run: npm install
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -58,6 +53,10 @@ jobs:
         uses: pulumi/actions@v4
         with:
           pulumi-version: ^3.0.0
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: infra
 
       - name: Pulumi Login
         run: pulumi login s3://${{secrets.PULUMI_STATE_S3_BUCKET}}
