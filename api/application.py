@@ -7,7 +7,7 @@ from ._setup_ import settings
 from .router import base_router
 
 description = """
-Sample FastAPI Service. 🚀
+Sample FastAPI Service! 🚀
 """
 
 app = FastAPI(
