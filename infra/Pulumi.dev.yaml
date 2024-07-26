@@ -1,0 +1,4 @@
+encryptionsalt: v1:1q1tX8W2esc=:v1:yeEKb3LginCLV28i:wOznQqNfFdnVqM1iQUrpN+nTlkaegw==
+config:
+  aws:region: us-east-2
+  docker:host: tcp://127.0.0.1:2376/
