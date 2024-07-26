@@ -33,11 +33,7 @@ jobs:
 
       - name: Get commit hash
         id: get-commit-hash
-        run: echo "::set-output name=commit-hash::$(git rev-parse --short HEAD)"
-
-      - name: Get timestamp
-        id: get-timestamp
-        run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+        run: echo "commit-hash::$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build, tag, and push the image to Amazon ECR
         id: build-image
@@ -66,8 +62,11 @@ jobs:
         run: pulumi stack select dev
         working-directory: infra
 
-      - name: Set up Docker image tag
-        run: pulumi config set image_tag "${{ steps.get-commit-hash.outputs.commit-hash }}-${{ steps.get-timestamp.outputs.timestamp }}"
+      - name: Set up Pulumi Configs
+        run: |
+          pulumi config set image_tag "${{ steps.get-commit-hash.outputs.commit-hash }}"
+          pulumi config set app_name "fastapi-prototype"
+          pulumi config set credentials_secret "${{secrets.DB_CREDENTIALS_SECRET}}"
         working-directory: infra
 
       - name: Deploy Infrastructure Changes

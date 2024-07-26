@@ -4,23 +4,26 @@ import * as pulumi from "@pulumi/pulumi";
 
 const config = new pulumi.Config();
 export const imageTag = config.require("image_tag");
+export const appName = config.require("app_name");
+export const credentialsSecret = config.require("credentials_secret");
+
 
 // An ECS cluster to deploy into.
-const cluster = new aws.ecs.Cluster("pulumi-flask-cluster", {});
+const cluster = new aws.ecs.Cluster(`${appName}-cluster`, {});
 
 // Create a load balancer to listen for requests and route them to the container.
-const loadBalancer = new awsx.lb.ApplicationLoadBalancer("pulumi-flask-lb", {});
+const loadBalancer = new awsx.lb.ApplicationLoadBalancer(`${appName}-lb`, {});
 
-const dbcreds = new aws.secretsmanager.Secret("dbcreds", {
-    description: "RDS database postgres credentials for database-1",
-    name: "rds-db-credentials/cluster-IODSIQ5QKFEEIUDQVGGHGBQUCE/postgres/1721919538454",
+const dbCreds = new aws.secretsmanager.Secret(`${appName}-credentials`, {
+    description: "RDS database postgres credentials for the app",
+    name: credentialsSecret, //"rds-db-credentials/cluster-IODSIQ5QKFEEIUDQVGGHGBQUCE/postgres/1721919538454",
 }, {
     protect: true,
 });
 
 const baseContainerSettings = {
     name: "awsx-ecs",
-    image: `471112624128.dkr.ecr.us-east-2.amazonaws.com/fastapi-prototype:${imageTag}`,
+    image: `471112624128.dkr.ecr.us-east-2.amazonaws.com/${appName}:${imageTag}`,
     cpu: 128,
     memory: 512,
     essential: true,
@@ -41,19 +44,19 @@ const baseContainerSettings = {
     secrets: [
         {
             name: "DATABASE_HOST",
-            valueFrom: pulumi.interpolate`${dbcreds.arn}:host::`,
+            valueFrom: pulumi.interpolate`${dbCreds.arn}:host::`,
         },
         {
             name: "DATABASE_PORT",
-            valueFrom: pulumi.interpolate`${dbcreds.arn}:port::`,
+            valueFrom: pulumi.interpolate`${dbCreds.arn}:port::`,
         },
         {
             name: "DATABASE_USER",
-            valueFrom: pulumi.interpolate`${dbcreds.arn}:username::`,
+            valueFrom: pulumi.interpolate`${dbCreds.arn}:username::`,
         },
         {
             name: "DATABASE_PASSWORD",
-            valueFrom: pulumi.interpolate`${dbcreds.arn}:password::`,
+            valueFrom: pulumi.interpolate`${dbCreds.arn}:password::`,
         },
     ],
 };
@@ -66,7 +69,7 @@ const executionRolePolicies = [
 ]
 
 // Define the service and configure it to use our image and load balancer.
-const service = new awsx.ecs.FargateService("pulumi-flask-service", {
+const service = new awsx.ecs.FargateService(`${appName}-service`, {
     cluster: cluster.arn,
     assignPublicIp: true,
     taskDefinitionArgs: {
@@ -81,7 +84,7 @@ const service = new awsx.ecs.FargateService("pulumi-flask-service", {
 
 
 
-const migrationsTask = new awsx.ecs.FargateTaskDefinition("pulumi-flask-service-migrations-td", {
+const migrationsTask = new awsx.ecs.FargateTaskDefinition(`${appName}-migrations-td`, {
     container: {
         ...baseContainerSettings,
         entryPoint: ["/usr/bin/make"],
@@ -97,4 +100,4 @@ const migrationsTask = new awsx.ecs.FargateTaskDefinition("pulumi-flask-service-
 
 
 // Export the URL so we can easily access it.
-export const frontendURL = pulumi.interpolate `http://${loadBalancer.loadBalancer.dnsName}`;
+export const frontendURL = pulumi.interpolate `http://${loadBalancer.loadBalancer.dnsName}/docs`;
