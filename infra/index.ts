@@ -5,8 +5,6 @@ import * as pulumi from "@pulumi/pulumi";
 const config = new pulumi.Config();
 export const imageTag = config.require("image_tag");
 export const appName = config.require("app_name");
-export const credentialsSecret = config.require("credentials_secret");
-
 
 // An ECS cluster to deploy into.
 const cluster = new aws.ecs.Cluster(`${appName}-cluster`, {});
@@ -14,9 +12,9 @@ const cluster = new aws.ecs.Cluster(`${appName}-cluster`, {});
 // Create a load balancer to listen for requests and route them to the container.
 const loadBalancer = new awsx.lb.ApplicationLoadBalancer(`${appName}-lb`, {});
 
-const dbCreds = new aws.secretsmanager.Secret(`${appName}-credentials`, {
+const dbCreds = new aws.secretsmanager.Secret('app-credentials', {
     description: "RDS database postgres credentials for the app",
-    name: credentialsSecret, //"rds-db-credentials/cluster-IODSIQ5QKFEEIUDQVGGHGBQUCE/postgres/1721919538454",
+    name: `${appName}-credentials`,
 }, {
     protect: true,
 });

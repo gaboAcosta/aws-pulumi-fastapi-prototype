@@ -67,7 +67,6 @@ jobs:
         run: |
           pulumi config set image_tag "${{ steps.get-commit-hash.outputs.commit-hash }}"
           pulumi config set app_name "fastapi-prototype"
-          pulumi config set credentials_secret "${{secrets.DB_CREDENTIALS_SECRET}}"
         working-directory: infra
 
       - name: Deploy Infrastructure Changes
